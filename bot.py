@@ -104,7 +104,7 @@ async def handle_vote_up(callback: types.CallbackQuery):
             await callback.message.edit_reply_markup(reply_markup=kb)
         except Exception:
             pass
-        await callback.answer("👍 Ваш голос враховано! Час життя події подовжено на +30 хв.")
+        await callback.answer("👍 Ваш голос враховано! Час життя події подовжено на +15 хв.")
     else:
         await callback.answer("⚠️ Ви вже голосували за цю подію або термін її дії закінчився.")
 
@@ -120,7 +120,7 @@ async def handle_vote_down(callback: types.CallbackQuery):
             await callback.message.edit_reply_markup(reply_markup=kb)
         except Exception:
             pass
-        await callback.answer("👎 Ваш голос враховано! Час життя події скорочено на -30 хв.")
+        await callback.answer("👎 Ваш голос враховано! Час життя події скорочено на -15 хв.")
     else:
         await callback.answer("⚠️ Ви вже голосували за цю подію або термін її дії закінчився.")
 
@@ -133,10 +133,10 @@ async def cmd_rules(message: types.Message):
         f"• 🔴 Червоний – Щось трапилося (ДТП, затор, перешкода).\n"
         f"• 🟡 Жовтий – Під питанням / на перевірці.\n\n"
         f"<b>2. Голосування:</b>\n"
-        f"• <b>👍 Погодитися (+30 хв)</b> — підтвердити та подовжити актуальність.\n"
-        f"• <b>👎 Не погодитися (-30 хв)</b> — спростувати та скоротити час показу.\n\n"
+        f"• <b>👍 Погодитися (+15 хв)</b> — підтвердити та подовжити актуальність.\n"
+        f"• <b>👎 Не погодитися (-15 хв)</b> — спростувати та скоротити час показу.\n\n"
         f"<b>3. Автоматичне прибрання:</b>\n"
-        f"• Усі події автоматично зникають через 4 години.\n\n"
+        f"• Усі події автоматично зникають через 15 хвилин.\n\n"
         f"📡 Оперативний канал: @{config.SOURCE_CHANNEL}"
     )
     await message.answer(rules_text, parse_mode="HTML")
@@ -195,7 +195,7 @@ async def handle_incoming_text_or_forward(message: types.Message):
         f"{status_icon} <b>Оновлення ситуації на дорогах Світловодська!</b>\n\n"
         f"📍 <b>Локація:</b> {loc_name}\n"
         f"💬 <b>Повідомлення:</b> {text}\n\n"
-        f"⏱ <i>Дійсне 4 години (подовжується голосуванням)</i>\n"
+        f"⏱ <i>Дійсне 15 хвилин (подовжується голосуванням)</i>\n"
         f"👤 Джерело: {author_name}"
     )
 
@@ -245,7 +245,7 @@ async def handle_channel_post(message: types.Message):
         confirm_text = (
             f"{status_icon} <b>Метку поставлено на карту!</b>\n"
             f"📍 <b>{loc_name}</b>\n"
-            f"⏱ Дійсна 4 год"
+            f"⏱ Дійсна 15 хв"
         )
         kb = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text="🗺 Дивитись на карті", url=SURGE_MAP_URL)
