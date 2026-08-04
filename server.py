@@ -55,7 +55,7 @@ async def add_event(request):
         lng = data.get("lng")
         author_name = data.get("author_name", "Користувач")
         author_id = data.get("author_id", 0)
-        custom_ttl_hours = data.get("custom_ttl_hours", 4)
+        custom_ttl_hours = data.get("custom_ttl_hours", config.DEFAULT_EVENT_TTL_HOURS)
 
         if not status or not title or lat is None or lng is None:
             return web.json_response({"success": False, "error": "Заповніть усі обов'язкові поля"}, status=400)
