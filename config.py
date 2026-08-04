@@ -46,11 +46,11 @@ STATUSES = {
         "description": "Обстановка спокійна, перешкод немає"
     },
     "red": {
-        "title": "Щось трапилося",
+        "title": "Тривога",
         "color": "#ef4444",
         "pulse_class": "pulse-red",
-        "icon": "fa-triangle-exclamation",
-        "description": "Інцидент, ДТП, затор або перекриття"
+        "icon": "fa-bell-exclamation",
+        "description": "Тривога! Інцидент, ДТП, затор або небезпека"
     },
     "yellow": {
         "title": "Під питанням",
