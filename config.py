@@ -26,9 +26,10 @@ CITY_CENTER_LNG = 33.228000
 DEFAULT_ZOOM = 14
 
 # --- ПАРАМЕТРИ ПОДІЙ ТА ЧАСУ (TTL) ---
-DEFAULT_EVENT_TTL_HOURS = 4  # Час життя події за замовчуванням (4 години)
-UPVOTE_EXTEND_MINUTES = 30   # Подовження життя при "Погодитися" (+30 хв)
-DOWNVOTE_REDUCE_MINUTES = 30  # Скорочення життя при "Не погодитися" (-30 хв)
+DEFAULT_EVENT_TTL_HOURS = 0.25  # Час життя події за замовчуванням (15 хвилин)
+DEFAULT_EVENT_TTL_MINUTES = 15 # 15 хвилин
+UPVOTE_EXTEND_MINUTES = 15     # Подовження життя при "Погодитися" (+15 хв)
+DOWNVOTE_REDUCE_MINUTES = 15    # Скорочення життя при "Не погодитися" (-15 хв)
 
 # --- СЕРВЕР ---
 WEB_SERVER_HOST = "0.0.0.0"
