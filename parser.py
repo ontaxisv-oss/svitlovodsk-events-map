@@ -172,28 +172,8 @@ async def process_new_messages(bot_instance=None):
         new_count += 1
         print(f"✨ [Парсер] Нова подія з t.me/{config.SOURCE_CHANNEL}: {title} | Status: {status}")
 
-        # 2. Публікуємо у цільовий канал @kr_probki якщо підключено бота
-        if bot_instance and config.TARGET_CHANNEL:
-            try:
-                status_icon = "🟢" if status == "green" else ("🔴" if status == "red" else "🟡")
-                
-                post_text = (
-                    f"{status_icon} <b>Нове сповіщення про ситуацію на дорогах!</b>\n\n"
-                    f"📍 <b>Локація:</b> {loc_name}\n"
-                    f"💬 <b>Повідомлення:</b> {text}\n\n"
-                    f"⏱ <i>Дійсне 4 години (можна подовжити голосуванням на карті)</i>\n"
-                    f"📢 Джерело: @{config.SOURCE_CHANNEL}"
-                )
-
-                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-                    InlineKeyboardButton(text="🗺 Переглянути на Карті Подій", url=config.PUBLIC_URL)
-                ]])
-
-                await bot_instance.send_message(config.TARGET_CHANNEL, post_text, parse_mode="HTML", reply_markup=keyboard)
-                print(f"📢 [Парсер] Опубліковано у канал {config.TARGET_CHANNEL}")
-            except Exception as e:
-                print(f"⚠️ Помилка відправки у канал {config.TARGET_CHANNEL}: {e}")
+        # Додаємо на карту безшумно
+        pass
 
     save_parsed_ids(parsed_ids)
     return new_count

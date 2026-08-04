@@ -240,19 +240,8 @@ async def handle_channel_post(message: types.Message):
     )
     print(f"📌 [kr_probki] {status_icon} Нова метка: {title}")
 
-    # Відповідаємо у канал підтвердженням з кнопкою на карту
-    try:
-        confirm_text = (
-            f"{status_icon} <b>Метку поставлено на карту!</b>\n"
-            f"📍 <b>{loc_name}</b>\n"
-            f"⏱ Дійсна 15 хв"
-        )
-        kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🗺 Дивитись на карті", url=SURGE_MAP_URL)
-        ]])
-        await bot.send_message(config.TARGET_CHANNEL, confirm_text, parse_mode="HTML", reply_markup=kb)
-    except Exception as e:
-        print(f"⚠️ Помилка відправки підтвердження: {e}")
+    # Безшумно ставимо метку на карту без відправки повідомлень у канал
+    pass
 
 async def start_bot():
     print(f"🤖 Бот Карта Подій Світловодськ запущен у нативному режимі!")
