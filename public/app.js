@@ -58,7 +58,7 @@ async function loadInitialData() {
     try {
         const [configRes, eventsRes, routesRes, districtsRes] = await Promise.all([
             fetch(API_BASE + '/api/config').then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch(`${API_BASE}/api/events?ttl_filter=${userSettings.ttl_hours}`).then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch(API_BASE + '/api/events').then(r => r.ok ? r.json() : null).catch(() => null),
             fetch(API_BASE + '/api/routes').then(r => r.ok ? r.json() : null).catch(() => null),
             fetch(API_BASE + '/api/districts').then(r => r.ok ? r.json() : null).catch(() => null)
         ]);
@@ -556,7 +556,7 @@ async function castVote(voteType) {
 // Перезавантаження подій
 async function reloadEvents() {
     try {
-        const eventsRes = await fetch(`${API_BASE}/api/events?ttl_filter=${userSettings.ttl_hours}`).then(r => r.json());
+        const eventsRes = await fetch(API_BASE + '/api/events').then(r => r.json());
         allEventsData = eventsRes.events || [];
         renderEvents();
     } catch (e) {

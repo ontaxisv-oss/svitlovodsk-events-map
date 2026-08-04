@@ -41,13 +41,7 @@ async def get_config(request):
 
 @routes.get('/api/events')
 async def get_events(request):
-    ttl_filter = request.query.get('ttl_filter')
-    try:
-        ttl_hours = float(ttl_filter) if ttl_filter else None
-    except ValueError:
-        ttl_hours = None
-
-    events = database.get_active_events(ttl_filter_hours=ttl_hours)
+    events = database.get_active_events()
     return web.json_response({"events": events})
 
 @routes.post('/api/events/add')
