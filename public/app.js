@@ -156,19 +156,27 @@ function renderEvents() {
 
     filtered.forEach(ev => {
         const statusClass = ev.status || 'green';
-        const iconSymbol = statusClass === 'green' ? '✓' : (statusClass === 'red' ? '!' : '?');
+        let iconHtml = '<i class="fa-solid fa-shield-halved"></i>';
+        if (statusClass === 'red') {
+            iconHtml = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        } else if (statusClass === 'yellow') {
+            iconHtml = '<i class="fa-solid fa-circle-question"></i>';
+        }
 
-        // Кастомний HTML-маркер з пульсуючим колом
+        // Сучасний 3D піновий маркер з неоновим сяйвом та радарним пульсом
         const customIcon = L.divIcon({
-            className: 'custom-event-marker',
+            className: 'custom-event-marker-wrapper',
             html: `
-                <div class="status-circle-marker ${statusClass}">
-                    <div class="pulse-ring"></div>
-                    <span>${iconSymbol}</span>
+                <div class="marker-container ${statusClass}">
+                    <div class="marker-pulse-radar ${statusClass}"></div>
+                    <div class="marker-pin-head ${statusClass}">
+                        ${iconHtml}
+                    </div>
+                    <div class="marker-pin-tail ${statusClass}"></div>
                 </div>
             `,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            iconSize: [38, 48],
+            iconAnchor: [19, 46]
         });
 
         const marker = L.marker([ev.lat, ev.lng], { icon: customIcon });
