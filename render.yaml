@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: svitlovodsk-events-map
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: BOT_TOKEN
+        value: 8469860489:AAH2ZC7y7FUeF6wZleI0Z_amSFdVxk4mY8w

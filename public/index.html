@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Карта Подій — Світловодськ</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Leaflet CSS & JS (Локальні файли для миттєвого завантаження) -->
+    <link rel="stylesheet" href="leaflet.css" />
+    <script src="leaflet.js"></script>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- Верхня шапка карти -->
+    <header class="app-header">
+        <div class="header-main">
+            <div class="brand-info">
+                <div class="brand-badge">🌍</div>
+                <div class="brand-text">
+                    <h1 id="cityTitle">Світловодськ</h1>
+                    <span class="sub-text">Карта Подій • t.me/ukraina_olivki</span>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <button id="toggleDistrictsBtn" class="icon-btn active" title="Райони міста">
+                    <i class="fa-solid fa-draw-polygon"></i>
+                </button>
+                <button id="openDistrictsEditBtn" class="icon-btn" title="Редагувати райони">
+                    <i class="fa-solid fa-pen-ruler"></i>
+                </button>
+                <button id="openSettingsBtn" class="icon-btn" title="Налаштування">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Легенда статусних кіл -->
+        <div class="status-legend-bar">
+            <div class="legend-item" data-filter="all">
+                <span class="legend-dot dot-all"></span> Всі
+            </div>
+            <div class="legend-item" data-filter="green">
+                <span class="legend-dot dot-green"></span> Спокійно
+            </div>
+            <div class="legend-item" data-filter="red">
+                <span class="legend-dot dot-red"></span> Щось трапилося
+            </div>
+            <div class="legend-item" data-filter="yellow">
+                <span class="legend-dot dot-yellow"></span> Під питанням
+            </div>
+        </div>
+    </header>
+
+    <!-- Карта Leaflet -->
+    <main id="map"></main>
+
+    <!-- Плаваюча кнопка "Навігація" (Центрування GPS) -->
+    <button id="navLocationFab" class="fab-btn fab-left" title="Перемістити до моєї геопозиції">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        <span>Навігація</span>
+    </button>
+
+    <!-- Плаваюча кнопка "+" (Додати мітку) -->
+    <button id="addEventFab" class="fab-btn fab-right" title="Додати нову мітку">
+        <i class="fa-solid fa-plus"></i>
+        <span>Додати мітку</span>
+    </button>
+
+    <!-- Індикатор вибору точки на карті -->
+    <div id="pinNotice" class="pin-notice hidden">
+        <div class="notice-text">
+            <i class="fa-solid fa-location-dot animated-bounce"></i>
+            <span>Натисніть на карту для встановлення мітки</span>
+        </div>
+        <button id="cancelPinBtn" class="btn-sm btn-secondary">Скасувати</button>
+    </div>
+
+    <!-- Індикатор режиму малювання секторів на карті -->
+    <div id="drawSectorBanner" class="pin-notice draw-banner hidden">
+        <div class="notice-text">
+            <i class="fa-solid fa-draw-polygon animated-bounce"></i>
+            <span id="drawSectorStatus">Малювання сектора: ставте точки на карті (точок: 0)</span>
+        </div>
+        <div class="draw-banner-btns">
+            <button id="finishDrawSectorBtn" class="btn-sm btn-primary">🟢 Завершити</button>
+            <button id="resetDrawSectorBtn" class="btn-sm btn-secondary">🗑 Скинути</button>
+            <button id="cancelDrawSectorBtn" class="btn-sm btn-secondary">❌ Скасувати</button>
+        </div>
+    </div>
+
+    <!-- Висувна панель події (Bottom Sheet) -->
+    <div id="eventSheet" class="bottom-sheet hidden">
+        <div class="sheet-backdrop" id="sheetBackdrop"></div>
+        <div class="sheet-content">
+            <div class="sheet-handle"></div>
+            <button class="sheet-close" id="closeSheetBtn"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="event-sheet-header">
+                <span id="eventStatusBadge" class="status-pill green">
+                    <i class="fa-solid fa-circle-check"></i> Спокійно
+                </span>
+                <span id="eventTimeCountdown" class="time-countdown">
+                    <i class="fa-regular fa-clock"></i> Зникне через 3г 45хв
+                </span>
+            </div>
+
+            <h2 id="eventTitle" class="event-title">Назва події</h2>
+            <p id="eventDescription" class="event-desc">Опис події...</p>
+
+            <div class="event-meta">
+                <span><i class="fa-solid fa-user"></i> Автор: <b id="eventAuthor">Анонім</b></span>
+                <span><i class="fa-regular fa-calendar"></i> Створено: <b id="eventCreated">12:00</b></span>
+            </div>
+
+            <!-- Блок голосування (Погодитися / Не погодитися) -->
+            <div class="voting-box">
+                <div class="voting-title">Підтвердження користувачів:</div>
+                <div class="voting-buttons">
+                    <button id="btnAgree" class="vote-btn btn-agree">
+                        <i class="fa-solid fa-thumbs-up"></i>
+                        <span>Погодитися (+30 хв)</span>
+                        <b id="agreeCount" class="vote-counter">0</b>
+                    </button>
+                    <button id="btnDisagree" class="vote-btn btn-disagree">
+                        <i class="fa-solid fa-thumbs-down"></i>
+                        <span>Не погодитися (-30 хв)</span>
+                        <b id="disagreeCount" class="vote-counter">0</b>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно створення події -->
+    <div id="addModal" class="modal hidden">
+        <div class="modal-backdrop" id="addModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-location-arrow"></i> Нова подія на карті</h3>
+                <button class="icon-btn" id="closeAddModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="addEventForm">
+                <!-- Вибір статусу (Кола) -->
+                <div class="form-group">
+                    <label>Статус події *</label>
+                    <div class="status-selector">
+                        <label class="status-radio-label green">
+                            <input type="radio" name="statusRadio" value="green" checked />
+                            <span class="radio-custom green-dot"></span>
+                            <span>🟢 Все спокійно</span>
+                        </label>
+                        <label class="status-radio-label red">
+                            <input type="radio" name="statusRadio" value="red" />
+                            <span class="radio-custom red-dot"></span>
+                            <span>🔴 Щось трапилося</span>
+                        </label>
+                        <label class="status-radio-label yellow">
+                            <input type="radio" name="statusRadio" value="yellow" />
+                            <span class="radio-custom yellow-dot"></span>
+                            <span>🟡 Під питанням</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventTitleInput">Короткий заголовок / Локація *</label>
+                    <input type="text" id="eventTitleInput" placeholder="наприклад: Вул. Героїв України" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescInput">Короткий опис *</label>
+                    <textarea id="eventDescInput" rows="3" placeholder="Опишіть ситуацію детальніше..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inputLat">Широта (Lat)</label>
+                        <input type="number" step="any" id="inputLat" readonly required />
+                    </div>
+                    <div class="form-group">
+                        <label for="inputLng">Довгота (Lng)</label>
+                        <input type="number" step="any" id="inputLng" readonly required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn-secondary btn-sm" id="pickOnMapBtn">
+                        <i class="fa-solid fa-map-pin"></i> Обрати іншу точку на карті
+                    </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelAddBtn">Скасувати</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-check"></i> Опублікувати
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно налаштувань -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-backdrop" id="settingsModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sliders"></i> ⚙️ Налаштування</h3>
+                <button class="icon-btn" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="settings-body">
+                <!-- Налаштування часу зникання -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label><i class="fa-regular fa-clock"></i> Час відображення подій</label>
+                        <span class="setting-desc">Усі події автоматично зникають через обраний час:</span>
+                    </div>
+                    <select id="ttlSelect" class="setting-select">
+                        <option value="1">1 година</option>
+                        <option value="2">2 години</option>
+                        <option value="4" selected>4 години (За замовчуванням)</option>
+                        <option value="6">6 годин</option>
+                    </select>
+                </div>
+
+                <!-- Налаштування радіуса сповіщень -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label><i class="fa-solid fa-radar"></i> Радіус зони сповіщень</label>
+                        <span class="setting-desc">Отримувати сповіщення про нові події у межах:</span>
+                    </div>
+                    <select id="radiusSelect" class="setting-select">
+                        <option value="1">1 км</option>
+                        <option value="3" selected>3 км (Світловодськ)</option>
+                        <option value="5">5 км</option>
+                        <option value="10">10 км</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" id="saveSettingsBtn">Зберегти налаштування</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно редагування районів -->
+    <div id="districtsModal" class="modal hidden">
+        <div class="modal-backdrop" id="districtsModalBackdrop"></div>
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-ruler"></i> 🗺 Редагування районів міста</h3>
+                <button class="icon-btn" id="closeDistrictsModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body scrollable-body">
+                <p class="section-desc">Тут ви можете змінювати назви, кольори та межі (координати) районів Світловодська:</p>
+                <div id="districtsList" class="districts-list">
+                    <!-- Заповнюється динамічно JS -->
+                </div>
+                <button type="button" id="addNewDistrictBtn" class="btn-secondary btn-block mt-2">
+                    <i class="fa-solid fa-plus"></i> Додати новий район
+                </button>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancelDistrictsBtn">Скасувати</button>
+                <button type="button" class="btn-primary" id="saveDistrictsBtn">
+                    <i class="fa-solid fa-floppy-disk"></i> Зберегти всі райони
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно створення нового сектора після малювання -->
+    <div id="saveSectorModal" class="modal hidden">
+        <div class="modal-backdrop" id="saveSectorModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-draw-polygon"></i> Зберегти намальований сектор</h3>
+                <button class="icon-btn" id="closeSaveSectorModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="saveSectorForm">
+                <div class="form-group">
+                    <label for="sectorNameInput">Назва сектора / району *</label>
+                    <input type="text" id="sectorNameInput" placeholder="наприклад: Сектор 9: Новий сектор" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="sectorColorInput">Колір відображення на карті</label>
+                    <input type="color" id="sectorColorInput" value="#3b82f6" style="width: 100%; height: 40px; border-radius: 8px; cursor: pointer;" />
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelSaveSectorBtn">Скасувати</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-check"></i> Зберегти сектор
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Всплывающий Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

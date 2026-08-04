@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Карта Подій — Світловодськ</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+/* ╔══════════════════════════════════════════════════════════╗
+   ║    СТИЛІ СВІТЛОЇ ТЕМИ КАРТИ ПОДІЙ СВІТЛОВОДСЬК (OSM)      ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+:root {
+    --bg-light: #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+
+    --green-status: #16a34a;
+    --red-status: #dc2626;
+    --yellow-status: #d97706;
+
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --shadow-glow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    -webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+}
+
+#map {
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+}
+
+.leaflet-control-attribution {
+    font-size: 10px !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: var(--text-muted) !important;
+    backdrop-filter: blur(6px);
+}
+
+/* --- ВЕРХНЯ ШАПКА ПРИЛОЖЕНИЯ (СВІТЛА ТЕМА) --- */
+.app-header {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.header-main, .status-legend-bar {
+    pointer-events: auto;
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    padding: 10px 16px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-glow);
+}
+
+.brand-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-badge {
+    font-size: 24px;
+}
+
+.brand-text h1 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.brand-text .sub-text {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.header-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-main);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.icon-btn:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* --- ЛЕГЕНДА СТАТУСНИХ КІЛ (СВІТЛА) --- */
+.status-legend-bar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    padding: 6px 12px;
+    border-radius: 30px;
+    box-shadow: var(--shadow-glow);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 12px;
+    transition: background 0.2s;
+}
+
+.legend-item.active {
+    color: var(--text-main);
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot-all { background: #64748b; }
+.dot-green { background: var(--green-status); box-shadow: 0 0 6px var(--green-status); }
+.dot-red { background: var(--red-status); box-shadow: 0 0 6px var(--red-status); }
+.dot-yellow { background: var(--yellow-status); box-shadow: 0 0 6px var(--yellow-status); }
+
+/* --- ПЛАВАЮЧІ КНОПКИ (FAB - СВІТЛА ТЕМА) --- */
+.fab-btn {
+    position: fixed;
+    bottom: 24px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.fab-btn:active { transform: scale(0.94); }
+
+.fab-left {
+    left: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    color: #2563eb;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.fab-right {
+    right: 14px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+/* --- ІНДИКАТОР ВИБОРУ ТОЧКИ --- */
+.pin-notice {
+    position: fixed;
+    top: 135px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid #2563eb;
+    padding: 10px 18px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-glow);
+}
+
+.notice-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #1d4ed8;
+}
+
+.animated-bounce {
+    animation: bounce 1.2s infinite;
+    color: #dc2626;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* --- СТАТУСНІ КОЛА ДЛЯ МІТОК НА СВІТЛІЙ КАРТІ --- */
+.status-circle-marker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.status-circle-marker.green {
+    background: var(--green-status);
+}
+.status-circle-marker.red {
+    background: var(--red-status);
+}
+.status-circle-marker.yellow {
+    background: var(--yellow-status);
+}
+
+/* Пульсація */
+.pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: pulseAnimation 2s infinite;
+    pointer-events: none;
+}
+
+.status-circle-marker.green .pulse-ring { border: 2px solid var(--green-status); }
+.status-circle-marker.red .pulse-ring { border: 2px solid var(--red-status); }
+.status-circle-marker.yellow .pulse-ring { border: 2px solid var(--yellow-status); }
+
+@keyframes pulseAnimation {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* --- BOTTOM SHEET (КАРТКА ПОДІЇ - СВІТЛА) --- */
+.bottom-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.sheet-content {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border-top: 1px solid var(--glass-border);
+    padding: 20px;
+    padding-bottom: 30px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    margin: 0 auto 16px;
+}
+
+.sheet-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-main);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.event-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status-pill.green { background: rgba(22, 163, 74, 0.1); color: #16a34a; border: 1px solid #16a34a; }
+.status-pill.red { background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid #dc2626; }
+.status-pill.yellow { background: rgba(217, 119, 6, 0.1); color: #d97706; border: 1px solid #d97706; }
+
+.time-countdown {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.04);
+    padding: 4px 10px;
+    border-radius: 10px;
+}
+
+.event-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.event-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+}
+
+.event-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+/* --- БЛОК ГОЛОСУВАННЯ --- */
+.voting-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.voting-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.voting-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.vote-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.vote-btn:active { transform: scale(0.96); }
+
+.btn-agree {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+
+.btn-disagree {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.vote-counter {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+/* --- МОДАЛЬНІ ВІКНА (СВІТЛІ) --- */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(6px);
+}
+
+.modal-card {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.form-group input, .form-group textarea, .setting-select {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+}
+
+.form-group input:focus, .form-group textarea:focus, .setting-select:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+.status-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-radio-label input { display: none; }
+
+.status-radio-label.green { color: #16a34a; }
+.status-radio-label.red { color: #dc2626; }
+.status-radio-label.yellow { color: #d97706; }
+
+.status-radio-label:has(input:checked) {
+    background: #e0f2fe;
+    border-color: #0284c7;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+.form-row .form-group { flex: 1; }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: var(--text-main);
+    border: 1px solid #cbd5e1;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* --- НАЛАШТУВАННЯ --- */
+.settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.setting-info label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.setting-info .setting-desc {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* --- TOAST --- */
+.toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4000;
+    background: #0f172a;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.hidden { display: none !important; }
+
+</style>
+</head>
+<body>
+
+    <!-- Верхня шапка карти -->
+    <header class="app-header">
+        <div class="header-main">
+            <div class="brand-info">
+                <div class="brand-badge">🌍</div>
+                <div class="brand-text">
+                    <h1 id="cityTitle">Світловодськ</h1>
+                    <span class="sub-text">Карта Подій • t.me/ukraina_olivki</span>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <button id="openSettingsBtn" class="icon-btn" title="Налаштування">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Легенда статусних кіл -->
+        <div class="status-legend-bar">
+            <div class="legend-item" data-filter="all">
+                <span class="legend-dot dot-all"></span> Всі
+            </div>
+            <div class="legend-item" data-filter="green">
+                <span class="legend-dot dot-green"></span> Спокійно
+            </div>
+            <div class="legend-item" data-filter="red">
+                <span class="legend-dot dot-red"></span> Щось трапилося
+            </div>
+            <div class="legend-item" data-filter="yellow">
+                <span class="legend-dot dot-yellow"></span> Під питанням
+            </div>
+        </div>
+    </header>
+
+    <!-- Карта Leaflet -->
+    <main id="map"></main>
+
+    <!-- Плаваюча кнопка "Навігація" (Центрування GPS) -->
+    <button id="navLocationFab" class="fab-btn fab-left" title="Перемістити до моєї геопозиції">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        <span>Навігація</span>
+    </button>
+
+    <!-- Плаваюча кнопка "+" (Додати мітку) -->
+    <button id="addEventFab" class="fab-btn fab-right" title="Додати нову мітку">
+        <i class="fa-solid fa-plus"></i>
+        <span>Додати мітку</span>
+    </button>
+
+    <!-- Індикатор вибору точки на карті -->
+    <div id="pinNotice" class="pin-notice hidden">
+        <div class="notice-text">
+            <i class="fa-solid fa-location-dot animated-bounce"></i>
+            <span>Натисніть на карту для встановлення мітки</span>
+        </div>
+        <button id="cancelPinBtn" class="btn-sm btn-secondary">Скасувати</button>
+    </div>
+
+    <!-- Висувна панель події (Bottom Sheet) -->
+    <div id="eventSheet" class="bottom-sheet hidden">
+        <div class="sheet-backdrop" id="sheetBackdrop"></div>
+        <div class="sheet-content">
+            <div class="sheet-handle"></div>
+            <button class="sheet-close" id="closeSheetBtn"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="event-sheet-header">
+                <span id="eventStatusBadge" class="status-pill green">
+                    <i class="fa-solid fa-circle-check"></i> Спокійно
+                </span>
+                <span id="eventTimeCountdown" class="time-countdown">
+                    <i class="fa-regular fa-clock"></i> Зникне через 3г 45хв
+                </span>
+            </div>
+
+            <h2 id="eventTitle" class="event-title">Назва події</h2>
+            <p id="eventDescription" class="event-desc">Опис події...</p>
+
+            <div class="event-meta">
+                <span><i class="fa-solid fa-user"></i> Автор: <b id="eventAuthor">Анонім</b></span>
+                <span><i class="fa-regular fa-calendar"></i> Створено: <b id="eventCreated">12:00</b></span>
+            </div>
+
+            <!-- Блок голосування (Погодитися / Не погодитися) -->
+            <div class="voting-box">
+                <div class="voting-title">Підтвердження користувачів:</div>
+                <div class="voting-buttons">
+                    <button id="btnAgree" class="vote-btn btn-agree">
+                        <i class="fa-solid fa-thumbs-up"></i>
+                        <span>Погодитися (+30 хв)</span>
+                        <b id="agreeCount" class="vote-counter">0</b>
+                    </button>
+                    <button id="btnDisagree" class="vote-btn btn-disagree">
+                        <i class="fa-solid fa-thumbs-down"></i>
+                        <span>Не погодитися (-30 хв)</span>
+                        <b id="disagreeCount" class="vote-counter">0</b>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно створення події -->
+    <div id="addModal" class="modal hidden">
+        <div class="modal-backdrop" id="addModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-location-arrow"></i> Нова подія на карті</h3>
+                <button class="icon-btn" id="closeAddModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="addEventForm">
+                <!-- Вибір статусу (Кола) -->
+                <div class="form-group">
+                    <label>Статус події *</label>
+                    <div class="status-selector">
+                        <label class="status-radio-label green">
+                            <input type="radio" name="statusRadio" value="green" checked />
+                            <span class="radio-custom green-dot"></span>
+                            <span>🟢 Все спокійно</span>
+                        </label>
+                        <label class="status-radio-label red">
+                            <input type="radio" name="statusRadio" value="red" />
+                            <span class="radio-custom red-dot"></span>
+                            <span>🔴 Щось трапилося</span>
+                        </label>
+                        <label class="status-radio-label yellow">
+                            <input type="radio" name="statusRadio" value="yellow" />
+                            <span class="radio-custom yellow-dot"></span>
+                            <span>🟡 Під питанням</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventTitleInput">Короткий заголовок / Локація *</label>
+                    <input type="text" id="eventTitleInput" placeholder="наприклад: Вул. Героїв України" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescInput">Короткий опис *</label>
+                    <textarea id="eventDescInput" rows="3" placeholder="Опишіть ситуацію детальніше..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inputLat">Широта (Lat)</label>
+                        <input type="number" step="any" id="inputLat" readonly required />
+                    </div>
+                    <div class="form-group">
+                        <label for="inputLng">Довгота (Lng)</label>
+                        <input type="number" step="any" id="inputLng" readonly required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn-secondary btn-sm" id="pickOnMapBtn">
+                        <i class="fa-solid fa-map-pin"></i> Обрати іншу точку на карті
+                    </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelAddBtn">Скасувати</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-check"></i> Опублікувати
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно налаштувань -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-backdrop" id="settingsModalBackdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sliders"></i> ⚙️ Налаштування</h3>
+                <button class="icon-btn" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="settings-body">
+                <!-- Налаштування часу зникання -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label><i class="fa-regular fa-clock"></i> Час відображення подій</label>
+                        <span class="setting-desc">Усі події автоматично зникають через обраний час:</span>
+                    </div>
+                    <select id="ttlSelect" class="setting-select">
+                        <option value="1">1 година</option>
+                        <option value="2">2 години</option>
+                        <option value="4" selected>4 години (За замовчуванням)</option>
+                        <option value="6">6 годин</option>
+                    </select>
+                </div>
+
+                <!-- Налаштування радіуса сповіщень -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <label><i class="fa-solid fa-radar"></i> Радіус зони сповіщень</label>
+                        <span class="setting-desc">Отримувати сповіщення про нові події у межах:</span>
+                    </div>
+                    <select id="radiusSelect" class="setting-select">
+                        <option value="1">1 км</option>
+                        <option value="3" selected>3 км (Світловодськ)</option>
+                        <option value="5">5 км</option>
+                        <option value="10">10 км</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" id="saveSettingsBtn">Зберегти налаштування</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Всплывающий Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+<script>
+/* ╔══════════════════════════════════════════════════════════╗
+   ║        ЛОГІКА КАРТИ ПОДІЙ СВІТЛОВОДСЬК (TELEGRAM WEBAPP)   ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
+
+let map = null;
+let eventsLayer = null;
+let routesLayer = null;
+let userLocMarker = null;
+
+let allEventsData = [];
+let routesData = [];
+let activeFilter = 'all';
+let isRoutesVisible = false;
+let isPinPickerActive = false;
+let tempPickerMarker = null;
+let currentOpenedEvent = null;
+
+// Координати Світловодська
+let cityCenter = [49.054000, 33.228000];
+
+// Налаштування користувача (з localStorage)
+let userSettings = {
+    ttl_hours: parseInt(localStorage.getItem('user_ttl_hours')) || 4,
+    radius_km: parseInt(localStorage.getItem('user_radius_km')) || 3
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadInitialData();
+    initMap();
+    setupEventListeners();
+    startCountdownTimer();
+});
+
+// Завантаження даних з сервера або локального сховища
+async function loadInitialData() {
+    try {
+        const [configRes, eventsRes, routesRes] = await Promise.all([
+            fetch('/api/config').then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch(`/api/events?ttl_filter=${userSettings.ttl_hours}`).then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch('/api/routes').then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
+
+        if (configRes && configRes.city_center) {
+            cityCenter = [configRes.city_center.lat, configRes.city_center.lng];
+        }
+        if (configRes && configRes.city_name) {
+            document.getElementById('cityTitle').innerText = configRes.city_name;
+        }
+
+        allEventsData = (eventsRes && eventsRes.events) ? eventsRes.events : JSON.parse(localStorage.getItem('local_events') || '[]');
+        routesData = (routesRes && routesRes.routes) ? routesRes.routes : [];
+
+        document.getElementById('ttlSelect').value = userSettings.ttl_hours.toString();
+        document.getElementById('radiusSelect').value = userSettings.radius_km.toString();
+    } catch (e) {
+        console.error('Помилка завантаження даних:', e);
+        allEventsData = JSON.parse(localStorage.getItem('local_events') || '[]');
+    }
+}
+
+// Ініціалізація карти Leaflet (OpenStreetMap)
+function initMap() {
+    map = L.map('map', {
+        zoomControl: false
+    }).setView(cityCenter, 14);
+
+    // Стандартна світла підкладка OpenStreetMap (OSM)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    routesLayer = L.layerGroup().addTo(map);
+    eventsLayer = L.layerGroup().addTo(map);
+
+    renderRoutes();
+    renderEvents();
+
+    // Клік по карті в режимі вибору точки
+    map.on('click', (e) => {
+        if (isPinPickerActive) {
+            onMapClickPinPicker(e.latlng);
+        }
+    });
+}
+
+// Рендер ліній маршрутів заторів (Зелені / Червоні лінії)
+function renderRoutes() {
+    if (!routesLayer) return;
+    routesLayer.clearLayers();
+
+    if (!isRoutesVisible) return;
+
+    routesData.forEach(route => {
+        const color = route.status === 'red' ? '#ef4444' : '#22c55e';
+        const polyline = L.polyline(route.coordinates, {
+            color: color,
+            weight: 5,
+            opacity: 0.8,
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).bindPopup(`<b>${route.name}</b><br>Стан руху: ${route.status === 'red' ? '🔴 Затор' : '🟢 Вільний'}`);
+
+        routesLayer.addLayer(polyline);
+    });
+}
+
+// Рендер статусних кіл подій на карті
+function renderEvents() {
+    if (!eventsLayer) return;
+    eventsLayer.clearLayers();
+
+    const filtered = allEventsData.filter(ev => {
+        if (activeFilter === 'all') return true;
+        return ev.status === activeFilter;
+    });
+
+    filtered.forEach(ev => {
+        const statusClass = ev.status || 'green';
+        const iconSymbol = statusClass === 'green' ? '✓' : (statusClass === 'red' ? '!' : '?');
+
+        // Кастомний HTML-маркер з пульсуючим колом
+        const customIcon = L.divIcon({
+            className: 'custom-event-marker',
+            html: `
+                <div class="status-circle-marker ${statusClass}">
+                    <div class="pulse-ring"></div>
+                    <span>${iconSymbol}</span>
+                </div>
+            `,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        const marker = L.marker([ev.lat, ev.lng], { icon: customIcon });
+        
+        marker.on('click', () => {
+            openEventDetails(ev);
+        });
+
+        eventsLayer.addLayer(marker);
+    });
+}
+
+// Відкриття карточки події (Bottom Sheet)
+function openEventDetails(ev) {
+    currentOpenedEvent = ev;
+
+    const badge = document.getElementById('eventStatusBadge');
+    badge.className = `status-pill ${ev.status}`;
+
+    if (ev.status === 'green') {
+        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Спокійно';
+    } else if (ev.status === 'red') {
+        badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Щось трапилося';
+    } else {
+        badge.innerHTML = '<i class="fa-solid fa-circle-question"></i> Під питанням';
+    }
+
+    document.getElementById('eventTitle').innerText = ev.title;
+    document.getElementById('eventDescription').innerText = ev.description;
+    document.getElementById('eventAuthor').innerText = ev.author_name || 'Анонім';
+
+    const createdDate = new Date(ev.created_at * 1000);
+    document.getElementById('eventCreated').innerText = createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('agreeCount').innerText = ev.upvotes || 0;
+    document.getElementById('disagreeCount').innerText = ev.downvotes || 0;
+
+    updateCountdownText(ev);
+
+    document.getElementById('eventSheet').classList.remove('hidden');
+}
+
+function updateCountdownText(ev) {
+    const remainingMin = ev.remaining_minutes || 240;
+    const hours = Math.floor(remainingMin / 60);
+    const mins = remainingMin % 60;
+    
+    let timeStr = 'Зникне через ';
+    if (hours > 0) timeStr += `${hours}г `;
+    timeStr += `${mins}хв`;
+
+    document.getElementById('eventTimeCountdown').innerHTML = `<i class="fa-regular fa-clock"></i> ${timeStr}`;
+}
+
+function closeEventDetails() {
+    document.getElementById('eventSheet').classList.add('hidden');
+    currentOpenedEvent = null;
+}
+
+// Установка слухачів подій
+function setupEventListeners() {
+    // Фільтрація по легенді
+    document.querySelectorAll('.legend-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.legend-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            activeFilter = item.dataset.filter;
+            renderEvents();
+        });
+    });
+
+    // Перемикач Маршрутів (якщо є)
+    const toggleRoutesBtn = document.getElementById('toggleRoutesBtn');
+    if (toggleRoutesBtn) {
+        toggleRoutesBtn.addEventListener('click', () => {
+            isRoutesVisible = !isRoutesVisible;
+            toggleRoutesBtn.classList.toggle('active', isRoutesVisible);
+            renderRoutes();
+            showToast(isRoutesVisible ? 'Шари маршрутів увімкнено' : 'Шари маршрутів вимкнено');
+        });
+    }
+
+    // Кнопка "Навігація" (GPS)
+    document.getElementById('navLocationFab').addEventListener('click', locateUser);
+
+    // Кнопка "+" (Додати мітку) - відразу відкриває модальне вікно з координатами центру карти
+    document.getElementById('addEventFab').addEventListener('click', handleAddFabClick);
+    document.getElementById('cancelPinBtn').addEventListener('click', stopPinPicker);
+    
+    const pickBtn = document.getElementById('pickOnMapBtn');
+    if (pickBtn) {
+        pickBtn.addEventListener('click', () => {
+            closeAddModal();
+            startPinPicker();
+        });
+    }
+
+    // Закриття Bottom Sheet
+    document.getElementById('closeSheetBtn').addEventListener('click', closeEventDetails);
+    document.getElementById('sheetBackdrop').addEventListener('click', closeEventDetails);
+
+    // Кнопки голосування
+    document.getElementById('btnAgree').addEventListener('click', () => castVote('up'));
+    document.getElementById('btnDisagree').addEventListener('click', () => castVote('down'));
+
+    // Модальне вікно додавання
+    document.getElementById('closeAddModalBtn').addEventListener('click', closeAddModal);
+    document.getElementById('cancelAddBtn').addEventListener('click', closeAddModal);
+    document.getElementById('addModalBackdrop').addEventListener('click', closeAddModal);
+    document.getElementById('addEventForm').addEventListener('submit', handleAddEventSubmit);
+
+    // Модальне вікно налаштувань
+    document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
+    document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
+    document.getElementById('settingsModalBackdrop').addEventListener('click', closeSettingsModal);
+    document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+}
+
+// Обробник клика на FAB "+"
+function handleAddFabClick() {
+    const center = map ? map.getCenter() : { lat: cityCenter[0], lng: cityCenter[1] };
+    document.getElementById('inputLat').value = center.lat.toFixed(6);
+    document.getElementById('inputLng').value = center.lng.toFixed(6);
+    openAddModal();
+}
+
+// Навігація до поточного місця користувача
+function locateUser() {
+    if (!navigator.geolocation) {
+        showToast('Геолокація не підтримується');
+        return;
+    }
+    showToast('Визначаємо вашу геолокацію...');
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const { latitude, longitude } = pos.coords;
+            map.flyTo([latitude, longitude], 16);
+
+            if (userLocMarker) map.removeLayer(userLocMarker);
+
+            userLocMarker = L.circleMarker([latitude, longitude], {
+                radius: 9,
+                color: '#ffffff',
+                weight: 2,
+                fillColor: '#3b82f6',
+                fillOpacity: 0.9
+            }).addTo(map).bindPopup('<b>Ви тут!</b>').openPopup();
+        },
+        (err) => {
+            console.error(err);
+            showToast('Не вдалося отримати GPS-координати');
+        }
+    );
+}
+
+// Режим вибору точки на карті
+function startPinPicker() {
+    isPinPickerActive = true;
+    document.getElementById('pinNotice').classList.remove('hidden');
+    document.getElementById('addEventFab').classList.add('hidden');
+    document.getElementById('navLocationFab').classList.add('hidden');
+    showToast('Клікніть на потрібне місце на карті Світловодська');
+}
+
+function stopPinPicker() {
+    isPinPickerActive = false;
+    document.getElementById('pinNotice').classList.add('hidden');
+    document.getElementById('addEventFab').classList.remove('hidden');
+    document.getElementById('navLocationFab').classList.remove('hidden');
+
+    if (tempPickerMarker) {
+        map.removeLayer(tempPickerMarker);
+        tempPickerMarker = null;
+    }
+}
+
+function onMapClickPinPicker(latlng) {
+    if (tempPickerMarker) map.removeLayer(tempPickerMarker);
+
+    tempPickerMarker = L.marker([latlng.lat, latlng.lng]).addTo(map);
+
+    document.getElementById('inputLat').value = latlng.lat.toFixed(6);
+    document.getElementById('inputLng').value = latlng.lng.toFixed(6);
+
+    stopPinPicker();
+    openAddModal();
+}
+
+function openAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+    document.getElementById('addEventForm').reset();
+}
+
+// Додавання нової події
+async function handleAddEventSubmit(e) {
+    e.preventDefault();
+
+    const selectedRadio = document.querySelector('input[name="statusRadio"]:checked');
+    const selectedStatus = selectedRadio ? selectedRadio.value : 'green';
+    const user = tg?.initDataUnsafe?.user;
+    const authorName = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Користувач';
+    const authorId = user ? user.id : 0;
+
+    let latVal = parseFloat(document.getElementById('inputLat').value);
+    let lngVal = parseFloat(document.getElementById('inputLng').value);
+
+    if (isNaN(latVal) || isNaN(lngVal)) {
+        const center = map ? map.getCenter() : { lat: cityCenter[0], lng: cityCenter[1] };
+        latVal = center.lat;
+        lngVal = center.lng;
+    }
+
+    const payload = {
+        status: selectedStatus,
+        title: document.getElementById('eventTitleInput').value.trim(),
+        description: document.getElementById('eventDescInput').value.trim(),
+        lat: latVal,
+        lng: lngVal,
+        author_name: authorName,
+        author_id: authorId,
+        custom_ttl_hours: userSettings.ttl_hours
+    };
+
+    try {
+        const res = await fetch('/api/events/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+        if (res && res.success) {
+            closeAddModal();
+            showToast('Подію успішно додано на карту!');
+            await reloadEvents();
+        } else {
+            // Фолбек для локального додавання
+            const localEv = {
+                id: 'local_' + Date.now(),
+                ...payload,
+                created_at: Math.floor(Date.now() / 1000),
+                expires_at: Math.floor(Date.now() / 1000) + (userSettings.ttl_hours * 3600),
+                upvotes: 1,
+                downvotes: 0,
+                remaining_minutes: userSettings.ttl_hours * 60,
+                voted_users: {}
+            };
+            allEventsData.unshift(localEv);
+            localStorage.setItem('local_events', JSON.stringify(allEventsData));
+            closeAddModal();
+            renderEvents();
+            showToast('Подію додано локально на карту!');
+        }
+    } catch (err) {
+        console.error(err);
+        closeAddModal();
+        renderEvents();
+    }
+}
+
+// Голосування (Погодитися / Не погодитися)
+async function castVote(voteType) {
+    if (!currentOpenedEvent) return;
+
+    const user = tg?.initDataUnsafe?.user;
+    const userId = user ? user.id : 12345;
+
+    try {
+        const res = await fetch('/api/events/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event_id: currentOpenedEvent.id,
+                user_id: userId,
+                vote_type: voteType
+            })
+        }).then(r => r.json());
+
+        if (res.success) {
+            showToast(voteType === 'up' ? 'Дякуємо! Час події подовжено на +30 хв' : 'Голос прийнято! Час події скорочено на -30 хв');
+            currentOpenedEvent = res.event;
+            document.getElementById('agreeCount').innerText = currentOpenedEvent.upvotes || 0;
+            document.getElementById('disagreeCount').innerText = currentOpenedEvent.downvotes || 0;
+            updateCountdownText(currentOpenedEvent);
+            await reloadEvents();
+        } else {
+            showToast(res.message || 'Ви вже голосували');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Не вдалося відправити голос');
+    }
+}
+
+// Перезавантаження подій
+async function reloadEvents() {
+    try {
+        const eventsRes = await fetch(`/api/events?ttl_filter=${userSettings.ttl_hours}`).then(r => r.json());
+        allEventsData = eventsRes.events || [];
+        renderEvents();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Налаштування
+function openSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function saveSettings() {
+    const ttl = parseInt(document.getElementById('ttlSelect').value);
+    const radius = parseInt(document.getElementById('radiusSelect').value);
+
+    userSettings.ttl_hours = ttl;
+    userSettings.radius_km = radius;
+
+    localStorage.setItem('user_ttl_hours', ttl);
+    localStorage.setItem('user_radius_km', radius);
+
+    closeSettingsModal();
+    showToast(`Налаштування збережено: ${ttl} год відображення, ${radius} км радіус`);
+    reloadEvents();
+}
+
+// Фоновий таймер відліку та авто-опитування нових подій з Telegram
+function startCountdownTimer() {
+    // Оновлення залишку хвилин щохвилини
+    setInterval(() => {
+        allEventsData.forEach(ev => {
+            if (ev.remaining_minutes && ev.remaining_minutes > 0) {
+                ev.remaining_minutes -= 1;
+            }
+        });
+        if (currentOpenedEvent) {
+            updateCountdownText(currentOpenedEvent);
+        }
+    }, 60000);
+
+    // Автоматична перевірка та завантаження нових меток з сервера кожні 10 секунд (Real-Time з Telegram)
+    setInterval(() => {
+        reloadEvents();
+    }, 10000);
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3500);
+}
+
+</script>
+</body>
+</html>

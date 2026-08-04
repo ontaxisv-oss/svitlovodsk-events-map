@@ -1,0 +1,8 @@
+cloudflared.exe
+*.zip
+deploy_githack.py
+upload_to_github_api.py
+__pycache__/
+*.pyc
+.env
+.git

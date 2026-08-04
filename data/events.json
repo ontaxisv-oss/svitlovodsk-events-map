@@ -1,0 +1,90 @@
+[
+  {
+    "id": "ev_1785775410000",
+    "status": "green",
+    "title": "1111",
+    "description": "ГЕС МЕНТЫ",
+    "lat": 49.071701,
+    "lng": 33.25038,
+    "created_at": 1785775410,
+    "expires_at": 1785779010,
+    "author_name": "Користувач",
+    "author_id": 0,
+    "upvotes": 2,
+    "downvotes": 1,
+    "voted_users": {
+      "0": "up",
+      "12345": "down",
+      "5650811266": "up"
+    },
+    "remaining_minutes": 54
+  },
+  {
+    "id": "ev_1785777489000",
+    "status": "red",
+    "title": "Тест ДТП на набережній",
+    "description": "Тестова метка — перевірка роботи карти з телефону",
+    "lat": 49.06,
+    "lng": 33.23,
+    "created_at": 1785777489,
+    "expires_at": 1785781089,
+    "author_name": "Тест карти",
+    "author_id": 999,
+    "upvotes": 1,
+    "downvotes": 0,
+    "voted_users": {
+      "999": "up"
+    }
+  },
+  {
+    "id": "ev_1785777991000",
+    "status": "red",
+    "title": "Світловодськ (Щось трапилося)",
+    "description": "петушары на детском мире",
+    "lat": 49.054,
+    "lng": 33.228,
+    "created_at": 1785777991,
+    "expires_at": 1785792391,
+    "author_name": ".",
+    "author_id": 5650811266,
+    "upvotes": 1,
+    "downvotes": 0,
+    "voted_users": {
+      "5650811266": "up"
+    }
+  },
+  {
+    "id": "ev_1785778560000",
+    "status": "red",
+    "title": "Гес (Щось трапилося)",
+    "description": "гес менти",
+    "lat": 49.076,
+    "lng": 33.251,
+    "created_at": 1785778560,
+    "expires_at": 1785792960,
+    "author_name": ".",
+    "author_id": 5650811266,
+    "upvotes": 1,
+    "downvotes": 0,
+    "voted_users": {
+      "5650811266": "up"
+    }
+  },
+  {
+    "id": "ev_1785778722000",
+    "status": "red",
+    "title": "Світловодськ (Щось трапилося)",
+    "description": "пидары на голубом",
+    "lat": 49.054,
+    "lng": 33.228,
+    "created_at": 1785778722,
+    "expires_at": 1785793122,
+    "author_name": ".",
+    "author_id": 5650811266,
+    "upvotes": 1,
+    "downvotes": 0,
+    "voted_users": {
+      "5650811266": "up"
+    }
+  }
+]
