@@ -85,7 +85,7 @@ def get_active_events(ttl_filter_hours=None):
 
     return active
 
-def add_event(status, title, description, lat, lng, author_name="Анонім", author_id=0, custom_ttl_hours=0.25):
+def add_event(status, title, description, lat, lng, author_name="Анонім", author_id=0, custom_ttl_hours=4):
     events = load_events()
     now = int(time.time())
     ttl_seconds = int(custom_ttl_hours * 3600)
