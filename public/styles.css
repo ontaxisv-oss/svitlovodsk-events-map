@@ -282,102 +282,268 @@ body, html {
     100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* --- BOTTOM SHEET (КАРТКА ПОДІЇ - СВІТЛА) --- */
-.bottom-sheet {
+/* --- ПЛАВАЮЧЕ ВІКНО ПОДІЇ (FLOATING CARD) --- */
+.event-float-overlay {
     position: fixed;
     inset: 0;
     z-index: 2000;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 0 12px 0;
+    pointer-events: none;
 }
 
-.sheet-backdrop {
+.event-float-overlay:not(.hidden) {
+    pointer-events: all;
+}
+
+.event-float-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(4px);
+    background: rgba(10, 18, 35, 0.45);
+    backdrop-filter: blur(5px);
 }
 
-.sheet-content {
+.event-float-card {
     position: relative;
     z-index: 1;
+    width: calc(100% - 24px);
+    max-width: 480px;
     background: #ffffff;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-    border-top: 1px solid var(--glass-border);
-    padding: 20px;
-    padding-bottom: 30px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+    animation: floatCardUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+@keyframes floatCardUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
 }
 
-.sheet-handle {
-    width: 40px;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    margin: 0 auto 16px;
+/* Кольорова смуга зверху */
+.event-float-stripe {
+    height: 5px;
+    width: 100%;
 }
 
-.sheet-close {
+/* Кнопка закрити */
+.event-float-close {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-main);
-    border: none;
-    width: 32px;
-    height: 32px;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.07);
+    color: #64748b;
     cursor: pointer;
-}
-
-.event-sheet-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.15s;
+    z-index: 2;
+}
+.event-float-close:hover { background: rgba(0,0,0,0.13); }
+
+/* Шапка: іконка + адреса */
+.event-float-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 16px 10px;
 }
 
-.status-pill {
-    display: inline-flex;
+.event-float-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.event-float-title-block {
+    flex: 1;
+    min-width: 0;
+    padding-right: 32px;
+}
+
+.event-float-address {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-float-status-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Рядок часу */
+.event-float-time-row {
+    display: flex;
+    gap: 0;
+    padding: 0 16px 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.event-float-time-item {
+    display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.status-pill.green { background: rgba(22, 163, 74, 0.1); color: #16a34a; border: 1px solid #16a34a; }
-.status-pill.red { background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid #dc2626; }
-.status-pill.yellow { background: rgba(217, 119, 6, 0.1); color: #d97706; border: 1px solid #d97706; }
-
-.time-countdown {
     font-size: 12px;
-    color: var(--text-muted);
-    background: rgba(0, 0, 0, 0.04);
-    padding: 4px 10px;
-    border-radius: 10px;
+    color: #64748b;
+    flex: 1;
 }
 
-.event-title {
-    font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 8px;
-    color: var(--text-main);
+.event-float-time-item i { color: #94a3b8; }
+
+.event-float-timer {
+    justify-content: flex-end;
+    font-weight: 600;
+    color: #0f172a;
 }
 
-.event-desc {
+.event-float-timer-urgent {
+    color: #ef4444 !important;
+    animation: urgentBlink 1s infinite;
+}
+
+@keyframes urgentBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+/* Опис */
+.event-float-desc {
+    padding: 10px 16px;
     font-size: 14px;
     line-height: 1.6;
     color: #334155;
+    background: #f8fafc;
+    margin: 0 16px;
+    border-radius: 12px;
+}
+
+/* Блок останніх змін */
+.event-float-history {
+    padding: 12px 16px 6px;
+}
+
+.event-float-history-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+}
+
+.event-float-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.event-float-history-empty {
+    font-size: 12px;
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+.event-float-history-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.event-float-history-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.event-float-history-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.event-float-history-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+/* Голосування */
+.event-float-vote-row {
+    display: flex;
+    gap: 10px;
+    padding: 10px 16px;
+}
+
+.event-float-vote-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.event-float-vote-btn:active { transform: scale(0.96); }
+
+.event-float-vote-btn.agree {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.event-float-vote-btn.disagree {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+}
+
+.vote-num {
+    background: rgba(255,255,255,0.25);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+/* Автор */
+.event-float-author {
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    padding: 4px 16px 16px;
+}
+
+.event-float-author b { color: #64748b; }
+
+
     margin-bottom: 16px;
 }
 

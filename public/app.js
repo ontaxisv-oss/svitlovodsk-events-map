@@ -189,52 +189,102 @@ function renderEvents() {
     });
 }
 
-// Відкриття карточки події (Bottom Sheet)
+// Відкриття плаваючого вікна події
 function openEventDetails(ev) {
     currentOpenedEvent = ev;
 
-    const badge = document.getElementById('eventStatusBadge');
-    badge.className = `status-pill ${ev.status}`;
+    const statusColors = { green: '#10b981', red: '#ef4444', yellow: '#f59e0b' };
+    const statusIcons  = { green: 'fa-circle-check', red: 'fa-triangle-exclamation', yellow: 'fa-circle-question' };
+    const statusLabels = { green: 'Все спокійно', red: 'Тривога', yellow: 'Під питанням' };
 
-    if (ev.status === 'green') {
-        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Спокійно';
-    } else if (ev.status === 'red') {
-        badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Щось трапилося';
-    } else {
-        badge.innerHTML = '<i class="fa-solid fa-circle-question"></i> Під питанням';
-    }
+    const color = statusColors[ev.status] || '#64748b';
+    const icon  = statusIcons[ev.status]  || 'fa-circle-info';
+    const label = statusLabels[ev.status] || '';
 
-    document.getElementById('eventTitle').innerText = ev.title;
-    document.getElementById('eventDescription').innerText = ev.description;
+    // Кольорова смуга
+    document.getElementById('eventFloatStripe').style.background =
+        `linear-gradient(90deg, ${color}, ${color}88)`;
+
+    // Іконка
+    const iconWrap = document.getElementById('eventFloatIconWrap');
+    iconWrap.style.background = `linear-gradient(135deg, ${color}, ${color}cc)`;
+    iconWrap.style.boxShadow  = `0 6px 20px ${color}55`;
+    document.getElementById('eventFloatIcon').className = `fa-solid ${icon}`;
+
+    // Адреса та статус
+    // Дістаємо тільки локацію (до " (")
+    const rawTitle = ev.title || '';
+    const addressPart = rawTitle.includes('(') ? rawTitle.split('(')[0].trim() : rawTitle;
+    document.getElementById('eventFloatAddress').innerText = addressPart || 'Невідома локація';
+
+    const statusEl = document.getElementById('eventFloatStatusLabel');
+    statusEl.innerText = label;
+    statusEl.style.color = color;
+
+    // Час додавання
+    const createdDate = new Date(ev.created_at * 1000);
+    document.getElementById('eventCreated').innerText =
+        createdDate.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+    // Таймер
+    updateCountdownText(ev);
+
+    // Опис
+    document.getElementById('eventDescription').innerText = ev.description || '';
+
+    // Автор
     document.getElementById('eventAuthor').innerText = ev.author_name || 'Анонім';
 
-    const createdDate = new Date(ev.created_at * 1000);
-    document.getElementById('eventCreated').innerText = createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    document.getElementById('agreeCount').innerText = ev.upvotes || 0;
+    // Голоси
+    document.getElementById('agreeCount').innerText    = ev.upvotes   || 0;
     document.getElementById('disagreeCount').innerText = ev.downvotes || 0;
 
-    updateCountdownText(ev);
+    // Останні події у цьому місці (±0.003 градуси ~ 300м)
+    const historyList = document.getElementById('eventHistoryList');
+    const nearby = allEventsData.filter(e =>
+        e.id !== ev.id &&
+        Math.abs(e.lat - ev.lat) < 0.003 &&
+        Math.abs(e.lng - ev.lng) < 0.003
+    ).sort((a, b) => b.created_at - a.created_at).slice(0, 3);
+
+    if (nearby.length === 0) {
+        historyList.innerHTML = '<div class="event-float-history-empty">Немає інших повідомлень поруч</div>';
+    } else {
+        const dotColors = { green: '#10b981', red: '#ef4444', yellow: '#f59e0b' };
+        historyList.innerHTML = nearby.map(e => {
+            const t = new Date(e.created_at * 1000).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+            const dot = dotColors[e.status] || '#94a3b8';
+            const desc = e.description ? e.description.substring(0, 60) + (e.description.length > 60 ? '…' : '') : '';
+            return `<div class="event-float-history-item">
+                <span class="event-float-history-dot" style="background:${dot}"></span>
+                <div>
+                    <div class="event-float-history-time">${t}</div>
+                    <div class="event-float-history-desc">${desc}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
 
     document.getElementById('eventSheet').classList.remove('hidden');
 }
 
 function updateCountdownText(ev) {
-    const remainingMin = ev.remaining_minutes || 240;
+    const remainingMin = ev.remaining_minutes || 0;
     const hours = Math.floor(remainingMin / 60);
-    const mins = remainingMin % 60;
-    
-    let timeStr = 'Зникне через ';
-    if (hours > 0) timeStr += `${hours}г `;
-    timeStr += `${mins}хв`;
+    const mins  = remainingMin % 60;
+    let timeStr = hours > 0 ? `${hours}г ${mins}хв` : `${mins} хв`;
+    document.getElementById('eventCountdownVal').innerText = timeStr;
 
-    document.getElementById('eventTimeCountdown').innerHTML = `<i class="fa-regular fa-clock"></i> ${timeStr}`;
+    // Підсвічуємо червоним якщо < 5 хв
+    const timerEl = document.getElementById('eventTimeCountdown');
+    timerEl.classList.toggle('event-float-timer-urgent', remainingMin <= 5);
 }
 
 function closeEventDetails() {
     document.getElementById('eventSheet').classList.add('hidden');
     currentOpenedEvent = null;
 }
+
 
 // Установка слухачів подій
 function setupEventListeners() {

@@ -83,46 +83,75 @@
 
 
 
-    <!-- Висувна панель події (Bottom Sheet) -->
-    <div id="eventSheet" class="bottom-sheet hidden">
-        <div class="sheet-backdrop" id="sheetBackdrop"></div>
-        <div class="sheet-content">
-            <div class="sheet-handle"></div>
-            <button class="sheet-close" id="closeSheetBtn"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Плаваюче вікно події (Floating Card) -->
+    <div id="eventSheet" class="event-float-overlay hidden">
+        <div class="event-float-backdrop" id="sheetBackdrop"></div>
+        <div class="event-float-card">
 
-            <div class="event-sheet-header">
-                <span id="eventStatusBadge" class="status-pill green">
-                    <i class="fa-solid fa-circle-check"></i> Спокійно
-                </span>
-                <span id="eventTimeCountdown" class="time-countdown">
-                    <i class="fa-regular fa-clock"></i> Зникне через 3г 45хв
-                </span>
-            </div>
+            <!-- Кольорова смуга зверху по статусу -->
+            <div class="event-float-stripe" id="eventFloatStripe"></div>
 
-            <h2 id="eventTitle" class="event-title">Назва події</h2>
-            <p id="eventDescription" class="event-desc">Опис події...</p>
+            <!-- Кнопка закрити -->
+            <button class="event-float-close" id="closeSheetBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
 
-            <div class="event-meta">
-                <span><i class="fa-solid fa-user"></i> Автор: <b id="eventAuthor">Анонім</b></span>
-                <span><i class="fa-regular fa-calendar"></i> Створено: <b id="eventCreated">12:00</b></span>
-            </div>
-
-            <!-- Блок голосування (Погодитися / Не погодитися) -->
-            <div class="voting-box">
-                <div class="voting-title">Підтвердження користувачів:</div>
-                <div class="voting-buttons">
-                    <button id="btnAgree" class="vote-btn btn-agree">
-                        <i class="fa-solid fa-thumbs-up"></i>
-                        <span>Погодитися (+30 хв)</span>
-                        <b id="agreeCount" class="vote-counter">0</b>
-                    </button>
-                    <button id="btnDisagree" class="vote-btn btn-disagree">
-                        <i class="fa-solid fa-thumbs-down"></i>
-                        <span>Не погодитися (-30 хв)</span>
-                        <b id="disagreeCount" class="vote-counter">0</b>
-                    </button>
+            <!-- Шапка: іконка + адреса + час -->
+            <div class="event-float-header">
+                <div class="event-float-icon-wrap" id="eventFloatIconWrap">
+                    <i class="fa-solid fa-triangle-exclamation" id="eventFloatIcon"></i>
+                </div>
+                <div class="event-float-title-block">
+                    <div class="event-float-address" id="eventFloatAddress">Адреса / Локація</div>
+                    <div class="event-float-status-label" id="eventFloatStatusLabel">Тривога</div>
                 </div>
             </div>
+
+            <!-- Час і таймер -->
+            <div class="event-float-time-row">
+                <div class="event-float-time-item">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>Додано о <b id="eventCreated">--:--</b></span>
+                </div>
+                <div class="event-float-time-item event-float-timer" id="eventTimeCountdown">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <span>Зникне через <b id="eventCountdownVal">--</b></span>
+                </div>
+            </div>
+
+            <!-- Опис повідомлення -->
+            <div class="event-float-desc" id="eventDescription"></div>
+
+            <!-- Останні зміни в цьому місці -->
+            <div class="event-float-history" id="eventHistoryBlock">
+                <div class="event-float-history-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Останні повідомлення тут
+                </div>
+                <div class="event-float-history-list" id="eventHistoryList">
+                    <div class="event-float-history-empty">Немає інших повідомлень</div>
+                </div>
+            </div>
+
+            <!-- Голосування -->
+            <div class="event-float-vote-row">
+                <button id="btnAgree" class="event-float-vote-btn agree">
+                    <i class="fa-solid fa-thumbs-up"></i>
+                    <span>Підтвердити</span>
+                    <b id="agreeCount" class="vote-num">0</b>
+                </button>
+                <button id="btnDisagree" class="event-float-vote-btn disagree">
+                    <i class="fa-solid fa-thumbs-down"></i>
+                    <span>Спростувати</span>
+                    <b id="disagreeCount" class="vote-num">0</b>
+                </button>
+            </div>
+
+            <!-- Автор -->
+            <div class="event-float-author">
+                <i class="fa-solid fa-user-circle"></i>
+                Повідомив: <b id="eventAuthor">Анонім</b>
+            </div>
+
         </div>
     </div>
 
