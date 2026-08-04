@@ -88,7 +88,7 @@ async function loadInitialData() {
 function initMap() {
     map = L.map('map', {
         zoomControl: false
-    }).setView(cityCenter, 14);
+    }).setView(cityCenter, 13);
 
     const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap',

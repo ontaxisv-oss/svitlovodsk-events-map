@@ -23,7 +23,7 @@ COUNTRY_NAME = "Україна"
 # Координати центру Світловодська
 CITY_CENTER_LAT = 49.054000
 CITY_CENTER_LNG = 33.228000
-DEFAULT_ZOOM = 14
+DEFAULT_ZOOM = 13
 
 # --- ПАРАМЕТРИ ПОДІЙ ТА ЧАСУ (TTL) ---
 DEFAULT_EVENT_TTL_HOURS = 0.25  # Час життя події за замовчуванням (15 хвилин)
