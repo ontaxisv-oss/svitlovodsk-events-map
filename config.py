@@ -49,7 +49,7 @@ STATUSES = {
         "title": "Тривога",
         "color": "#ef4444",
         "pulse_class": "pulse-red",
-        "icon": "fa-bell-exclamation",
+        "icon": "fa-triangle-exclamation",
         "description": "Тривога! Інцидент, ДТП, затор або небезпека"
     },
     "yellow": {

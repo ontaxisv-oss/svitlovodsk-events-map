@@ -158,7 +158,7 @@ function renderEvents() {
         const statusClass = ev.status || 'green';
         let iconHtml = '<i class="fa-solid fa-shield-halved"></i>';
         if (statusClass === 'red') {
-            iconHtml = '<i class="fa-solid fa-bell-exclamation"></i>';
+            iconHtml = '<i class="fa-solid fa-triangle-exclamation"></i>';
         } else if (statusClass === 'yellow') {
             iconHtml = '<i class="fa-solid fa-circle-question"></i>';
         }
