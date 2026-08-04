@@ -3,7 +3,7 @@ import logging
 import sys
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart, Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -17,11 +17,29 @@ bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher()
 
 SURGE_MAP_URL = "https://svitlovodsk-map.surge.sh"
+BOT_USERNAME = "kr_olive_bot"
 
 def get_map_inline_kb():
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="🗺 Відкрити Карту Подій", url=SURGE_MAP_URL)
     ]])
+
+def get_channel_pinned_kb():
+    """Кнопки для закріпленого повідомлення в каналі — Mini App + посилання на бот"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="🗺 Карта Подій (Mini App)",
+                web_app=WebAppInfo(url=SURGE_MAP_URL)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="✏️ Повідомити про подію",
+                url=f"https://t.me/{BOT_USERNAME}"
+            )
+        ]
+    ])
 
 def get_event_vote_kb(event_id, upvotes=1, downvotes=0):
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -232,6 +250,38 @@ async def handle_channel_post(message: types.Message):
     except Exception as e:
         print(f"⚠️ Не вдалося видалити пост з каналу: {e}")
 
+async def post_channel_pinned_message():
+    """Публікує/оновлює закріплене повідомлення у каналі @kr_probki"""
+    text = (
+        f"📡 <b>Карта Подій м. Світловодськ</b>\n\n"
+        f"Тут відображаються актуальні події на дорогах та у місті в режимі реального часу.\n\n"
+        f"⏱ Метки живуть <b>15 хвилин</b>, потім зникають автоматично.\n"
+        f"👍 Голосуй щоб продовжити або скасувати подію.\n\n"
+        f"✏️ Щоб повідомити про подію — пиши боту @{BOT_USERNAME}"
+    )
+    try:
+        msg = await bot.send_message(
+            chat_id=config.TARGET_CHANNEL,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=get_channel_pinned_kb()
+        )
+        await bot.pin_chat_message(
+            chat_id=config.TARGET_CHANNEL,
+            message_id=msg.message_id,
+            disable_notification=True
+        )
+        print(f"📌 Закріплене повідомлення опубліковано в {config.TARGET_CHANNEL}")
+    except Exception as e:
+        print(f"⚠️ Не вдалося опублікувати закріплене повідомлення: {e}")
+
+@dp.message(F.chat.type == "private", Command("pin"))
+async def cmd_pin(message: types.Message):
+    """Адмін-команда: /pin — публікує закріплене повідомлення в канал"""
+    await post_channel_pinned_message()
+    await message.answer("✅ Закріплене повідомлення опубліковано у каналі!")
+
 async def start_bot():
     print(f"🤖 Бот Карта Подій Світловодськ запущен у нативному режимі!")
+    await post_channel_pinned_message()
     await dp.start_polling(bot)
