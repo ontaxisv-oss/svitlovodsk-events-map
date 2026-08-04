@@ -240,8 +240,12 @@ async def handle_channel_post(message: types.Message):
     )
     print(f"📌 [kr_probki] {status_icon} Нова метка: {title}")
 
-    # Безшумно ставимо метку на карту без відправки повідомлень у канал
-    pass
+    # Видаляємо пост з каналу після обробки
+    try:
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+        print(f"🗑 Пост видалено з каналу (msg_id={message.message_id})")
+    except Exception as e:
+        print(f"⚠️ Не вдалося видалити пост з каналу: {e}")
 
 async def start_bot():
     print(f"🤖 Бот Карта Подій Світловодськ запущен у нативному режимі!")
