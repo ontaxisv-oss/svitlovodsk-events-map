@@ -34,12 +34,6 @@
             </div>
             
             <div class="header-controls">
-                <button id="toggleDistrictsBtn" class="icon-btn active" title="Райони міста">
-                    <i class="fa-solid fa-draw-polygon"></i>
-                </button>
-                <button id="openDistrictsEditBtn" class="icon-btn" title="Редагувати райони">
-                    <i class="fa-solid fa-pen-ruler"></i>
-                </button>
                 <button id="openSettingsBtn" class="icon-btn" title="Налаштування">
                     <i class="fa-solid fa-gear"></i>
                 </button>
@@ -87,18 +81,7 @@
         <button id="cancelPinBtn" class="btn-sm btn-secondary">Скасувати</button>
     </div>
 
-    <!-- Індикатор режиму малювання секторів на карті -->
-    <div id="drawSectorBanner" class="pin-notice draw-banner hidden">
-        <div class="notice-text">
-            <i class="fa-solid fa-draw-polygon animated-bounce"></i>
-            <span id="drawSectorStatus">Малювання сектора: ставте точки на карті (точок: 0)</span>
-        </div>
-        <div class="draw-banner-btns">
-            <button id="finishDrawSectorBtn" class="btn-sm btn-primary">🟢 Завершити</button>
-            <button id="resetDrawSectorBtn" class="btn-sm btn-secondary">🗑 Скинути</button>
-            <button id="cancelDrawSectorBtn" class="btn-sm btn-secondary">❌ Скасувати</button>
-        </div>
-    </div>
+
 
     <!-- Висувна панель події (Bottom Sheet) -->
     <div id="eventSheet" class="bottom-sheet hidden">
@@ -254,64 +237,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn-primary" id="saveSettingsBtn">Зберегти налаштування</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Модальне вікно редагування районів -->
-    <div id="districtsModal" class="modal hidden">
-        <div class="modal-backdrop" id="districtsModalBackdrop"></div>
-        <div class="modal-card modal-lg">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-pen-ruler"></i> 🗺 Редагування районів міста</h3>
-                <button class="icon-btn" id="closeDistrictsModalBtn"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div class="modal-body scrollable-body">
-                <p class="section-desc">Тут ви можете змінювати назви, кольори та межі (координати) районів Світловодська:</p>
-                <div id="districtsList" class="districts-list">
-                    <!-- Заповнюється динамічно JS -->
-                </div>
-                <button type="button" id="addNewDistrictBtn" class="btn-secondary btn-block mt-2">
-                    <i class="fa-solid fa-plus"></i> Додати новий район
-                </button>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" id="cancelDistrictsBtn">Скасувати</button>
-                <button type="button" class="btn-primary" id="saveDistrictsBtn">
-                    <i class="fa-solid fa-floppy-disk"></i> Зберегти всі райони
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальне вікно створення нового сектора після малювання -->
-    <div id="saveSectorModal" class="modal hidden">
-        <div class="modal-backdrop" id="saveSectorModalBackdrop"></div>
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-draw-polygon"></i> Зберегти намальований сектор</h3>
-                <button class="icon-btn" id="closeSaveSectorModalBtn"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <form id="saveSectorForm">
-                <div class="form-group">
-                    <label for="sectorNameInput">Назва сектора / району *</label>
-                    <input type="text" id="sectorNameInput" placeholder="наприклад: Сектор 9: Новий сектор" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="sectorColorInput">Колір відображення на карті</label>
-                    <input type="color" id="sectorColorInput" value="#3b82f6" style="width: 100%; height: 40px; border-radius: 8px; cursor: pointer;" />
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" id="cancelSaveSectorBtn">Скасувати</button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-check"></i> Зберегти сектор
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 

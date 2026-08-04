@@ -110,18 +110,14 @@ function initMap() {
     osmTile.addTo(map);
 
     routesLayer = L.layerGroup().addTo(map);
-    districtsLayer = L.layerGroup().addTo(map);
     eventsLayer = L.layerGroup().addTo(map);
 
-    renderDistricts();
     renderRoutes();
     renderEvents();
 
-    // Клік по карті в режимі малювання секторів або вибору точки
+    // Клік по карті в режимі вибору точки
     map.on('click', (e) => {
-        if (isDrawingSector) {
-            onMapClickDrawingSector(e.latlng);
-        } else if (isPinPickerActive) {
+        if (isPinPickerActive) {
             onMapClickPinPicker(e.latlng);
         }
     });
