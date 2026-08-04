@@ -175,7 +175,7 @@ async def handle_incoming_text_or_forward(message: types.Message):
     author_name = message.from_user.first_name if message.from_user else "Користувач"
     title = f"{loc_name} ({config.STATUSES[status]['title']})"
 
-    # 1. Зберігаємо в базу
+    # 1. Зберігаємо в базу та ставимо метку на карті
     new_event = database.add_event(
         status=status,
         title=title,
@@ -190,30 +190,15 @@ async def handle_incoming_text_or_forward(message: types.Message):
     status_icon = "🟢" if status == "green" else ("🔴" if status == "red" else "🟡")
     event_id = new_event.get('id')
 
-    # 2. Публікуємо в канал @kr_probki
-    channel_post_text = (
-        f"{status_icon} <b>Оновлення ситуації на дорогах Світловодська!</b>\n\n"
-        f"📍 <b>Локація:</b> {loc_name}\n"
-        f"💬 <b>Повідомлення:</b> {text}\n\n"
-        f"⏱ <i>Дійсне 15 хвилин (подовжується голосуванням)</i>\n"
-        f"👤 Джерело: {author_name}"
-    )
-
-    try:
-        kb = get_event_vote_kb(event_id, 1, 0)
-        await bot.send_message(config.TARGET_CHANNEL, channel_post_text, parse_mode="HTML", reply_markup=kb)
-        sent_channel_msg = f"\n📢 <b>Опубліковано у каналі {config.TARGET_CHANNEL}!</b>"
-    except Exception as e:
-        print(f"Error sending to channel: {e}")
-        sent_channel_msg = ""
-
     reply_text = (
-        f"✅ <b>Повідомлення розпізнано та додано у систему!</b>\n\n"
+        f"✅ <b>Метку поставлено на карті!</b>\n\n"
         f"Статус: {status_icon} <b>{config.STATUSES[status]['title']}</b>\n"
-        f"Локація: <b>{loc_name}</b>{sent_channel_msg}"
+        f"Локація: <b>{loc_name}</b>\n\n"
+        f"⏱ <i>Метка зникне через 15 хвилин</i>"
     )
 
-    await message.answer(reply_text, parse_mode="HTML", reply_markup=get_main_keyboard())
+    kb = get_event_vote_kb(event_id, 1, 0)
+    await message.answer(reply_text, parse_mode="HTML", reply_markup=kb)
 
 @dp.channel_post()
 async def handle_channel_post(message: types.Message):
